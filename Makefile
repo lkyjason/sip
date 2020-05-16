@@ -1,9 +1,14 @@
 CC=gcc
 CFLAGS=-g -Wall -Werror
-SRC=main.c
+SERVER_SRC=server.c
+CLIENT_SRC=client.c
+COMMON_SRC=
 
-all: sip
+all: server client
 
-sip: $(SRC)
+client: $(COMMON_SRC) $(CLIENT_SRC)
+	$(CC) $(CFLAGS) $(FLAGS) $^ -o $@ 
+
+server: $(COMMON_SRC) $(SERVER_SRC)
 	$(CC) $(CFLAGS) $(FLAGS) $^ -o $@ 
 	
