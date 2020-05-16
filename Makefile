@@ -1,14 +1,14 @@
 CC=gcc
 CFLAGS=-g -Wall -Werror
 SERVER_SRC=server.c
-CLIENT_SRC=client.c
 COMMON_SRC=
 
-all: server client
-
-client: $(COMMON_SRC) $(CLIENT_SRC)
-	$(CC) $(CFLAGS) $(FLAGS) $^ -o $@ 
+all: server
 
 server: $(COMMON_SRC) $(SERVER_SRC)
 	$(CC) $(CFLAGS) $(FLAGS) $^ -o $@ 
+
+clean:
+	-rm server
 	
+.PHONY: clean

@@ -117,6 +117,13 @@ int main(int argc, char *argv[]) {
 
         // print_addr((struct sockaddr *) &their_addr);
 
+        char msg[100];
+        rc = recv(clientfd, msg, 100, 0);
+        printf("recv: %s", msg);
+
+        char *ret = "yep";
+        rc = send(clientfd, ret, 3, 0);
+
         close(clientfd);
     }
 
