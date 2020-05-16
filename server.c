@@ -7,26 +7,29 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define MAX_LISTEN_QUEUE 10
+#include <worker.h>
+#include <server.h>
 
-void print_addr(struct addrinfo *p) {
+server_t server;
 
-    char ipstr[INET6_ADDRSTRLEN];
-    char *ipver;
-    void *addr;
+int setup_workers() {
+    int i, rc;
 
-    if (p->ai_family == AF_INET) { // IPv4
-        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-        addr = &(ipv4->sin_addr);
-        ipver = "IPv4";
-    } else { // IPv6
-        struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-        addr = &(ipv6->sin6_addr);
-        ipver = "IPv6";
+    for(i=0 ; i<NUM_WORKERS ; i++) {
+        server.workers[i].worker_id = i;
+
+        if( (rc = pthread_create(&(server.workers[i].thread), NULL, worker_func, &(server.workers[i])) ) != 0) {
+            perror("[WORKER:CREATE]");
+            return -1;
+        }        
+
+        if( (rc = pthread_detach(server.workers[i].thread) ) != 0) {
+            perror("[WORKER:DETACH]");
+            return -1;
+        }
     }
 
-    inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
-    printf("addr is %s %s\n", ipver, ipstr);
+    return 0;
 }
 
 int setup_listen(char *port) {
@@ -47,9 +50,6 @@ int setup_listen(char *port) {
     }
 
     for(ptr = servinfo ; ptr != NULL ; ptr = ptr->ai_next) {
-        // print info
-        print_addr(ptr);
-
         // get listen socket
         if( (listenfd = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol) ) == -1 ) { 
             perror("[SERVER:SOCKET]");
@@ -77,7 +77,6 @@ int setup_listen(char *port) {
     return listenfd;
 }
 
-
 int main(int argc, char *argv[]) {
     int rc, listenfd;
 
@@ -87,6 +86,11 @@ int main(int argc, char *argv[]) {
     }
 
     char *port = argv[1];
+
+    // setup worker pool
+    if( (rc = setup_workers() ) != 0) {
+        exit(1);
+    }
 
     // setup listening socket
     if( (listenfd = setup_listen(port) ) == -1) {
@@ -107,13 +111,14 @@ int main(int argc, char *argv[]) {
 
     // main accept loop
     while(1) {
+        printf("loop!\n"); 
+
         if( (clientfd = accept(listenfd, (struct sockaddr *)&their_addr, &sin_size) ) == -1 ) {
             perror("[SERVER:ACCEPT]");
             continue;
         }
 
         printf("hello world...\n");
-        fflush(stdout);
 
         // print_addr((struct sockaddr *) &their_addr);
 

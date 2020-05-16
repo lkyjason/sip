@@ -1,12 +1,13 @@
 CC=gcc
 CFLAGS=-g -Wall -Werror
-SERVER_SRC=server.c
+INCLUDE=-Iinc
+SERVER_SRC=server.c worker.c
 COMMON_SRC=
 
 all: server
 
 server: $(COMMON_SRC) $(SERVER_SRC)
-	$(CC) $(CFLAGS) $(FLAGS) $^ -o $@ 
+	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) $^ -o $@ -pthread
 
 clean:
 	-rm server
