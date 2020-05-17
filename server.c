@@ -9,8 +9,10 @@
 
 #include <worker.h>
 #include <server.h>
+#include <conn_queue.h>
 
 server_t server;
+cqueue_t cqueue;
 
 int setup_workers() {
     int i, rc;
@@ -87,6 +89,11 @@ int main(int argc, char *argv[]) {
 
     char *port = argv[1];
 
+    // setup conn queue
+    if( (rc = cqueue_init(&cqueue) ) != 0 ) {
+        exit(1);
+    }
+
     // setup worker pool
     if( (rc = setup_workers() ) != 0) {
         exit(1);
@@ -111,25 +118,14 @@ int main(int argc, char *argv[]) {
 
     // main accept loop
     while(1) {
-        printf("loop!\n"); 
-
         if( (clientfd = accept(listenfd, (struct sockaddr *)&their_addr, &sin_size) ) == -1 ) {
             perror("[SERVER:ACCEPT]");
             continue;
         }
 
-        printf("hello world...\n");
-
-        // print_addr((struct sockaddr *) &their_addr);
-
-        char msg[100];
-        rc = recv(clientfd, msg, 100, 0);
-        printf("recv: %s", msg);
-
-        char *ret = "yep";
-        rc = send(clientfd, ret, 3, 0);
-
-        close(clientfd);
+        if( (rc = cqueue_enqueue(&cqueue, clientfd)) != 0 ) {
+            close(clientfd);
+        }
     }
 
     return 0;

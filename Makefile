@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall -Werror
 INCLUDE=-Iinc
-SERVER_SRC=server.c worker.c
+SERVER_SRC=server.c worker.c conn_queue.c
 COMMON_SRC=
 
 all: server
